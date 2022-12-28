@@ -51,4 +51,5 @@ auth_urlpatterns = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("stock-info/", api_views.StockPriceView.as_view()),
+    path("request-logs/", api_views.RequestLogsView.as_view()),
 ] + swagger_urlpatterns + auth_urlpatterns

@@ -7,9 +7,12 @@ from api.models import RequestLog
 from api.serializers import RequestLogSerializer, StockPriceSerializer
 from api.stock_info_providers.alphavantage.api_client import AlphavantageApiClient
 from api.utils import retrieve_last_two_days
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
@@ -20,7 +23,23 @@ class StockPriceView(APIView):
     View to retrieve the stock price for a given symbol.
     """
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserRateThrottle]
 
+    @swagger_auto_schema(
+        operation_description="Retrieve the stock price for a given symbol.",
+        responses={
+            200: StockPriceSerializer,
+            400: "Missing symbol in query params.",
+        },
+        manual_parameters=[
+            openapi.Parameter(
+                'symbol',
+                openapi.IN_QUERY,
+                description="Stock symbol",
+                type=openapi.TYPE_STRING
+            )
+        ]
+    )
     def get(self, request, format=None):
         """
         Retrieve the stock price for a given symbol.
@@ -55,16 +74,13 @@ class StockPriceView(APIView):
         )
 
 
-class RecordLogsView(APIView):
+class RequestLogsView(APIView):
     """
-    View to retrieve the logs for a given user.
+    View to retrieve the logs.
     """
     permission_classes = [IsAdminUser]
 
     def get(self, request, format=None):
-        """
-        Retrieve the logs for a given user.
-        """
         queryset = RequestLog.objects.all()
         serializer = RequestLogSerializer(queryset, many=True)
         return Response(serializer.data)
